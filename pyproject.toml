@@ -8,6 +8,9 @@ packages = [{include = "app"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
+confluent-kafka = "^2.2.0"
+pydantic = "^2.1.1"
+httpx = "^0.24.1"
 
 
 [build-system]
