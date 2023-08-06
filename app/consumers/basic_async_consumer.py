@@ -1,26 +1,26 @@
-import asyncio
+import abc
 import logging
 
-from aiokafka import AIOKafkaConsumer
+from aiokafka import AIOKafkaConsumer, ConsumerRecord
 
 from app.configuretion import get_consumer_kafka_settings
 
 logger = logging.getLogger(__name__)
 
 
-class AsyncKafkaConsumer:
+class BaseAsyncKafkaConsumer(metaclass=abc.ABCMeta):
 
     def __init__(self, topics: list[str], group_id: str) -> None:
         self._topics = topics
         self._group_id = group_id
         self._consumer: AIOKafkaConsumer | None = None
 
-    def build_aio_consumer(self) -> AIOKafkaConsumer:
+    def _build_aio_consumer(self) -> AIOKafkaConsumer:
         if self._consumer:
             return self._consumer
 
         self._consumer = AIOKafkaConsumer(
-            "test",
+            *self._topics,
             group_id=self._group_id,
             enable_auto_commit=False,
             bootstrap_servers=get_consumer_kafka_settings().bootstrap_servers,
@@ -30,7 +30,7 @@ class AsyncKafkaConsumer:
         return self._consumer
 
     async def stat_consume(self) -> None:
-        consumer = self.build_aio_consumer()
+        consumer = self._build_aio_consumer()
         print("Consumer created")
 
         await consumer.start()
@@ -38,7 +38,7 @@ class AsyncKafkaConsumer:
         print("start listen for messages")
         async for message in consumer:
             try:
-                await self.process_message(kafka_message=message)
+                await self._process_message(kafka_message=message)
                 await consumer.commit()
             except Exception as e:
                 logger.error(str(e))
@@ -47,21 +47,15 @@ class AsyncKafkaConsumer:
                     error=e,
                 )
 
-    async def process_message(self, kafka_message) -> None:
-        print(kafka_message)
-
     async def stop_consume(self) -> None:
         if self._consumer:
             await self._consumer.stop()
 
         self._consumer = None
 
+    @abc.abstractmethod
+    async def _process_message(self, kafka_message: ConsumerRecord) -> None:
+        pass
+
     async def _publish_message_to_failed_topic(self, kafka_message, error: Exception) -> None:
         ...
-
-
-if __name__ == "__main__":
-     c = AsyncKafkaConsumer(topics=['test'], group_id='test_group')
-
-     asyncio.run(c.stat_consume())
-     print()
