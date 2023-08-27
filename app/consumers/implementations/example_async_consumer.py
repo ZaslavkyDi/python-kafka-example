@@ -10,14 +10,21 @@ class ExampleAsyncKafkaConsumer(BaseAsyncKafkaConsumer):
 
     def __init__(self) -> None:
         super().__init__(
-            topics=["topic-example"],
+            topics=["topic-example", "test"],
             group_id="test-example-group",
         )
 
     async def _process_message(self, kafka_message: ConsumerRecord) -> None:
-        print()
+        print(kafka_message.value)
 
 
-if __name__ == "__main__":
-    consumer = ExampleAsyncKafkaConsumer()
-    asyncio.run(consumer.stat_consume())
+async def main():
+    p = ExampleAsyncKafkaConsumer()
+    try:
+        await p.start_consumer()
+    finally:
+        await p.stop_consumer()
+
+
+if __name__ == '__main__':
+    asyncio.run(main())

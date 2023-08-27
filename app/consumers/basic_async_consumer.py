@@ -29,7 +29,7 @@ class BaseAsyncKafkaConsumer(metaclass=abc.ABCMeta):
         )
         return self._consumer
 
-    async def stat_consume(self) -> None:
+    async def start_consumer(self) -> None:
         consumer = self._build_aio_consumer()
         print("Consumer created")
 
@@ -47,7 +47,7 @@ class BaseAsyncKafkaConsumer(metaclass=abc.ABCMeta):
                     error=e,
                 )
 
-    async def stop_consume(self) -> None:
+    async def stop_consumer(self) -> None:
         if self._consumer:
             await self._consumer.stop()
 
